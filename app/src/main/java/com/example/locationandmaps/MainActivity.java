@@ -1,7 +1,11 @@
 package com.example.locationandmaps;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +21,7 @@ import com.example.locationandmaps.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -72,5 +77,33 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    // Called when activity resume is complete
+    // after onResume() has been called
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+
+        int errorCode = GoogleApiAvailability.getInstance()
+                .isGooglePlayServicesAvailable(this);
+
+        if(errorCode != ConnectionResult.SUCCESS) {
+            Dialog errorDialog = GoogleApiAvailability.getInstance()
+                    .getErrorDialog(this, errorCode, errorCode, new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialogInterface) {
+                            Toast.makeText(MainActivity.this, "No services",
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                            finish();
+                        }
+                    });
+            errorDialog.show();
+        } else {
+            Toast.makeText(MainActivity.this, "All is good",
+                    Toast.LENGTH_LONG)
+                    .show();
+        }
     }
 }
