@@ -1,6 +1,7 @@
 package com.example.locationandmaps;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -13,8 +14,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
@@ -43,6 +46,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
+    private static final int ALL_PERMISSIONS_RESULT = 1111;
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
     private GoogleApiClient client;
@@ -252,6 +256,62 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                     "You need to enable permission to display location",
                     Toast.LENGTH_LONG)
                     .show();
+        }
+
+        LocationServices.getFusedLocationProviderClient(MainActivity.this)
+                .requestLocationUpdates(locationRequest, new LocationCallback() {
+                    @Override
+                    public void onLocationResult(@NonNull LocationResult locationResult) {
+                        super.onLocationResult(locationResult);
+
+                        if(locationResult != null) {
+                            Location location = locationResult.getLastLocation();
+                            locationTextView.setText(String.format("Lat: %s Lon: %s",
+                                    location.getLatitude(), location.getLongitude()));
+                        }
+                    }
+
+                    @Override
+                    public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
+                        super.onLocationAvailability(locationAvailability);
+                    }
+                }, null);
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case ALL_PERMISSIONS_RESULT:
+                for(String perm : permissionsToRequest) {
+                    if(!hasPermission(perm)) {
+                        permissionsRejected.add(perm);
+                    }
+                }
+                if(permissionsRejected.size() > 0) {
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if(shouldShowRequestPermissionRationale(permissionsRejected.get(0))) {
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setMessage("This permissions are mandatory to get location")
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                                requestPermissions(permissionsRejected.toArray(
+                                                        new String[permissionsRejected.size()]), ALL_PERMISSIONS_RESULT);
+                                            }
+                                        }
+                                    }).setNegativeButton("Cancel", null).create().show();
+                        }
+                    }
+                } else {
+                    if(client != null) {
+                        client.connect();
+                    }
+                }
+                break;
         }
     }
 
