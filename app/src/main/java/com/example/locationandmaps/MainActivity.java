@@ -87,6 +87,15 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
         permissionsToRequest = permissionsToRequest(permissions);
 
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if(permissionsToRequest.size() > 0) {
+                requestPermissions(permissionsToRequest.toArray(
+                        new String[permissionsToRequest.size()]),
+                        ALL_PERMISSIONS_RESULT
+                );
+            }
+        }
+
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
@@ -180,11 +189,6 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
-    }
-
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-
     }
 
     @Override
@@ -323,5 +327,13 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    // Where we update UI
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        if(location != null) {
+            locationTextView.setText(String.format("Lat: %s Lon: %s", location.getLatitude(), location.getLongitude()));
+        }
     }
 }
